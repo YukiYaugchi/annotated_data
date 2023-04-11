@@ -1,0 +1,95 @@
+# network architecture
+# encoder related
+### initialized with Mask-CTC 442 on encoder and ctc
+encoder: contextual_block_bifurcation_conformer    # contextual_block_conformer is the core of streaming conformer
+encoder_conf:
+    output_size: 256    # dimension of attention
+    attention_heads: 4
+    linear_units: 2048  # the number of units of position-wise feed forward
+    num_blocks: 6      # the number of encoder blocks
+    dropout_rate: 0.1
+    positional_dropout_rate: 0.1
+    attention_dropout_rate: 0.0
+    input_layer: conv2d # encoder architecture type
+    normalize_before: true
+    activation_type: "swish"
+    macaron_style: true
+    use_cnn_module: true
+    cnn_module_kernel: 7
+    block_size: 20     # streaming configuration
+    hop_size: 4        # streaming configuration
+    look_ahead: 8      # streaming configuration
+    init_average: true  # streaming configuration
+    ctx_pos_enc: true   # streaming configuration
+
+decoder: transducer
+decoder_conf:
+    rnn_type: lstm
+    num_layers: 1
+    hidden_size: 300
+    dropout: 0.1
+    dropout_embed: 0.2
+
+joint_net_conf:
+    joint_space_size: 300
+
+model_conf:
+    ctc_weight: 0.0
+    report_cer: False
+    report_wer: False
+
+# minibatch related
+batch_type: folded
+batch_size: 4
+#valid_batch_size: 1
+# optimization related
+accum_grad: 32
+grad_clip: 5
+patience: 300
+max_epoch: 100
+# val_scheduler_criterion:
+#     - valid
+#     - acc
+best_model_criterion:
+-   - valid
+    - loss_transducer
+    - min
+# early_stopping_criterion:
+#     - valid
+#     - cer_ctc
+#     - min
+keep_nbest_models: 10
+
+# NoamLR is deprecated. Use WarmupLR.
+# The following is equivalent setting for NoamLR:
+#
+#    optim: adam
+#    optim_conf:
+#        lr: 10.
+#    scheduler: noamlr
+#    scheduler_conf:
+#        model_size: 256
+#        warmup_steps: 25000
+#
+optim: adam
+optim_conf:
+    lr: 0.0005
+scheduler: warmuplr     # pytorch v1.1.0+ required
+scheduler_conf:
+    warmup_steps: 30000
+num_att_plot: 0
+specaug: specaug
+specaug_conf:
+    apply_time_warp: true
+    time_warp_window: 5
+    time_warp_mode: bicubic
+    apply_freq_mask: true
+    freq_mask_width_range:
+    - 0
+    - 30
+    num_freq_mask: 2
+    apply_time_mask: true
+    time_mask_width_range:
+    - 0
+    - 40
+    num_time_mask: 2
